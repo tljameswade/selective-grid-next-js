@@ -17,26 +17,60 @@ type Selected = {
     endCoord: Coord
 };
 
+type SelectStatus = {
+    currCoord: Coord | null,
+    isHighlighting: boolean,
+    selected: Selected | null,
+};
+
+
 const Grid = ({numOfRows, numOfCols}: Props) => {
-    const [selected, setSelected] = useState();
+    const [selectStatus, setSelectStatus] = useState<SelectStatus>({currCoord: null, isHighlighting: false, selected: null});
+
+    const mouseOverCell = (row: number, col: number) => {
+        setSelectStatus({
+            ...selectStatus,
+            currCoord: {row, col},
+            selected: selectStatus.isHighlighting ? {...selectStatus.selected, endCoord: {row, col}} : {...selectStatus.selected}
+        });
+    }
+
+    const startSelect = () => {
+        setSelectStatus({
+            ...selectStatus,
+            isHighlighting: true,
+            selected: {
+                startCoord: {...selectStatus.currCoord},
+                endCoord: {...selectStatus.currCoord},
+            }
+        });
+    }
+
+    const endSelect = () => {
+        setSelectStatus({
+            ...selectStatus,
+            isHighlighting: false,
+        });
+    }
+
     return (
-        <div>
+        <div onMouseUp={endSelect} onMouseDown={startSelect}>
             {[...Array(numOfRows).keys()].map(rowIndex => 
                 <div key={rowIndex} className={styles.row}>
                     {[...Array(numOfCols).keys()].map(colIndex => 
-                        <Cell rowIndex={rowIndex} 
+                        <Cell key={`${rowIndex},${colIndex}`}
+                              rowIndex={rowIndex} 
                               colIndex={colIndex} 
-                              selected={isSelected(rowIndex, colIndex, selected)}/>)}
+                              selected={isSelected(rowIndex, colIndex, selectStatus.selected)}
+                              mouseOver={mouseOverCell} />)}
                 </div>)}
         </div>
     );
 }
 
-const isSelected = (rowIndex: number, colIndex: number, selected: Selected|null) => selected && 
-                                                                                    rowIndex >= selected.startCoord.row &&
-                                                                                    rowIndex <= selected.endCoord.row &&
-                                                                                    colIndex >= selected.startCoord.col &&
-                                                                                    colIndex <= selected.endCoord.col;
+const isSelected = (rowIndex: number, colIndex: number, selected: Selected|null) => selected && selected.startCoord && selected.endCoord &&
+                                                                                    (rowIndex - selected.startCoord.row) * (rowIndex - selected.endCoord.row) <= 0 && 
+                                                                                    (colIndex - selected.startCoord.col) * (colIndex - selected.endCoord.col) <= 0;
 
 const SelectiveGridPage = () => 
 <div>
