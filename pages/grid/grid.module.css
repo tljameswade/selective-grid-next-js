@@ -4,6 +4,10 @@
     height: 10px;
 }
 
+.grid {
+    display: inline-block;
+}
+
 .row {
     display: flex;
 }

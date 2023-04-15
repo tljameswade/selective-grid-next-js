@@ -1,6 +1,7 @@
 import styles from './grid.module.css';
 import Cell from './cell';
-import { useState } from 'react';
+import Customize from './customize';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = {
     numOfRows: number,
@@ -23,9 +24,17 @@ type SelectStatus = {
     selected: Selected | null,
 };
 
+type GridSize = {
+    numOfRows: number,
+    numOfCols: number,
+};
+
 
 const Grid = ({numOfRows, numOfCols}: Props) => {
-    const [selectStatus, setSelectStatus] = useState<SelectStatus>({currCoord: null, isHighlighting: false, selected: null});
+    const gridRef = useRef<HTMLDivElement>(null);
+
+    const initialSelectStatus = {currCoord: null, isHighlighting: false, selected: null}
+    const [selectStatus, setSelectStatus] = useState<SelectStatus>(initialSelectStatus);
 
     const mouseOverCell = (row: number, col: number) => {
         setSelectStatus({
@@ -35,26 +44,40 @@ const Grid = ({numOfRows, numOfCols}: Props) => {
         });
     }
 
-    const startSelect = () => {
-        setSelectStatus({
-            ...selectStatus,
-            isHighlighting: true,
-            selected: {
-                startCoord: {...selectStatus.currCoord},
-                endCoord: {...selectStatus.currCoord},
-            }
-        });
+    const handleMouseDown = (event: MouseEvent) => {
+        if (gridRef.current && !gridRef.current.contains(event.target as Node)) {
+            setSelectStatus(initialSelectStatus);
+        } else {
+            setSelectStatus({
+                ...selectStatus,
+                isHighlighting: true,
+                selected: {
+                    startCoord: {...selectStatus.currCoord},
+                    endCoord: {...selectStatus.currCoord},
+                }
+            });            
+        }
+        console.log(selectStatus);
     }
 
-    const endSelect = () => {
+    const handleMouseUp = (event: MouseEvent) => {
         setSelectStatus({
             ...selectStatus,
             isHighlighting: false,
-        });
+        });       
     }
 
+    useEffect(() => {
+        document.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            document.removeEventListener('mousedown', handleMouseDown);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [handleMouseDown, handleMouseUp]);
+
     return (
-        <div onMouseUp={endSelect} onMouseDown={startSelect}>
+        <div ref={gridRef} className={styles.grid}>
             {[...Array(numOfRows).keys()].map(rowIndex => 
                 <div key={rowIndex} className={styles.row}>
                     {[...Array(numOfCols).keys()].map(colIndex => 
@@ -72,10 +95,16 @@ const isSelected = (rowIndex: number, colIndex: number, selected: Selected|null)
                                                                                     (rowIndex - selected.startCoord.row) * (rowIndex - selected.endCoord.row) <= 0 && 
                                                                                     (colIndex - selected.startCoord.col) * (colIndex - selected.endCoord.col) <= 0;
 
-const SelectiveGridPage = () => 
-<div>
-    This is a selectiive grid that allows you to select and highlight cells in the grid below
-    <Grid numOfRows={10} numOfCols={10} />
-</div>
+const SelectiveGridPage = () => {
+    const [gridSize, setGridSize] = useState<GridSize>({numOfRows: 0, numOfCols: 0});
+
+    return (
+        <div>
+            <Customize setGridSize={(numOfRows: number, numOfCols: number) => setGridSize({numOfRows, numOfCols})}/>
+            This is a selective grid that allows you to select and highlight cells in the grid below
+            <div><Grid numOfRows={gridSize.numOfRows} numOfCols={gridSize.numOfCols} /></div>
+        </div>
+    );
+}
 
 export default SelectiveGridPage
