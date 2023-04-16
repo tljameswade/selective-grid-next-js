@@ -1,13 +1,9 @@
-.cell {
-    border: 1px solid black;
-    width: 10px;
-    height: 10px;
-}
-
-.grid {
-    display: inline-block;
-}
-
 .row {
     display: flex;
+}
+
+.gridContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;;
 }

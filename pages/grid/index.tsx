@@ -1,11 +1,10 @@
 import styles from './grid.module.css';
-import Cell from './cell';
+import Cell, { borderStyle } from './cell';
 import Customize from './customize';
 import { useEffect, useRef, useState } from 'react';
 
 type Props = {
-    numOfRows: number,
-    numOfCols: number
+    numOfCellsPerRow: number
 };
 
 type Coord = {
@@ -24,13 +23,14 @@ type SelectStatus = {
     selected: Selected | null,
 };
 
-type GridSize = {
-    numOfRows: number,
-    numOfCols: number,
+const gridWidth = 500;
+const gridStyles = {
+    width: `${gridWidth}px`,
+    height: `${gridWidth}px`,
+    display: 'inline-block'
 };
 
-
-const Grid = ({numOfRows, numOfCols}: Props) => {
+const Grid = ({ numOfCellsPerRow }: Props) => {
     const gridRef = useRef<HTMLDivElement>(null);
 
     const initialSelectStatus = {currCoord: null, isHighlighting: false, selected: null}
@@ -57,7 +57,6 @@ const Grid = ({numOfRows, numOfCols}: Props) => {
                 }
             });            
         }
-        console.log(selectStatus);
     }
 
     const handleMouseUp = (event: MouseEvent) => {
@@ -77,14 +76,17 @@ const Grid = ({numOfRows, numOfCols}: Props) => {
     }, [handleMouseDown, handleMouseUp]);
 
     return (
-        <div ref={gridRef} className={styles.grid}>
-            {[...Array(numOfRows).keys()].map(rowIndex => 
+        <div ref={gridRef} style={gridStyles}>
+            {[...Array(numOfCellsPerRow).keys()].map(rowIndex => 
                 <div key={rowIndex} className={styles.row}>
-                    {[...Array(numOfCols).keys()].map(colIndex => 
+                    {[...Array(numOfCellsPerRow).keys()].map(colIndex => 
                         <Cell key={`${rowIndex},${colIndex}`}
                               rowIndex={rowIndex} 
-                              colIndex={colIndex} 
+                              colIndex={colIndex}
+                              cellSize={gridWidth / numOfCellsPerRow} 
                               selected={isSelected(rowIndex, colIndex, selectStatus.selected)}
+                              isRightEdge={colIndex===numOfCellsPerRow - 1}
+                              isBottomEdge={rowIndex===numOfCellsPerRow - 1}
                               mouseOver={mouseOverCell} />)}
                 </div>)}
         </div>
@@ -96,13 +98,19 @@ const isSelected = (rowIndex: number, colIndex: number, selected: Selected|null)
                                                                                     (colIndex - selected.startCoord.col) * (colIndex - selected.endCoord.col) <= 0;
 
 const SelectiveGridPage = () => {
-    const [gridSize, setGridSize] = useState<GridSize>({numOfRows: 0, numOfCols: 0});
+    const [numOfCellsPerRow, setNumOfCellsPerRow] = useState(0);
 
     return (
-        <div>
-            <Customize setGridSize={(numOfRows: number, numOfCols: number) => setGridSize({numOfRows, numOfCols})}/>
-            This is a selective grid that allows you to select and highlight cells in the grid below
-            <div><Grid numOfRows={gridSize.numOfRows} numOfCols={gridSize.numOfCols} /></div>
+        <div style={{margin: '10px'}}>
+            <Customize setNumOfCellsPerRow={(numOfCellsPerRow) => setNumOfCellsPerRow(numOfCellsPerRow)}/>
+            
+            {numOfCellsPerRow > 0 && 
+            <div style={{marginTop: '20px'}}>
+                <div>This is a selective grid that allows you to select and highlight cells in the grid below</div>
+                <div className={styles.gridContainer}>
+                    <Grid numOfCellsPerRow={numOfCellsPerRow} />
+                </div>
+            </div>}
         </div>
     );
 }
