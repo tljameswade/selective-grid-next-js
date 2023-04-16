@@ -1,15 +1,28 @@
-import styles from './grid.module.css';
-
 type Props = {
     rowIndex: number,
     colIndex: number,
     selected: boolean,
+    cellSize: number,
+    isRightEdge: boolean,
+    isBottomEdge: boolean,
     mouseOver: (row: number, col: number) => void,
 };
 
-const Cell = ({rowIndex, colIndex, selected, mouseOver}: Props) => 
-    <div className={styles.cell} style={{backgroundColor: selected? 'red' : 'white'}} onMouseOver={() => mouseOver(rowIndex, colIndex)}>
+export const borderStyle = '1px solid #d1d3de';
 
-    </div>;
+const getCellStyles = (selected: boolean, cellSize: number, isRightEdge: boolean, isBottomEdge: boolean) => {
+    return {
+        backgroundColor: selected ? '#9de3eb' : 'white',
+        borderLeft: borderStyle,
+        borderTop: borderStyle,
+        borderRight: isRightEdge ? borderStyle : 'none',
+        borderBottom: isBottomEdge ? borderStyle : 'none',
+        width: `${cellSize}px`,
+        height: `${cellSize}px`
+    };
+}
+
+const Cell = ({rowIndex, colIndex, selected, cellSize, isRightEdge, isBottomEdge, mouseOver}: Props) => 
+    <div style={getCellStyles(selected, cellSize, isRightEdge, isBottomEdge)} onMouseOver={() => mouseOver(rowIndex, colIndex)} />
 
 export default Cell
