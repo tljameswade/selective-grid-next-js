@@ -1,0 +1,21 @@
+.dropdown {
+    width: 300px;
+    padding-bottom: 10px;
+}
+
+.prompt {
+    width: 500px;
+    height: 300px;
+}
+
+.promptHolder {
+    padding-bottom: 10px;
+}
+
+.holder {
+    margin: 10px;
+}
+
+.formHolder {
+    padding-bottom: 20px;
+}
