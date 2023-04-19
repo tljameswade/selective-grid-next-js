@@ -42,7 +42,7 @@ type Input = {
     prompt: string
 }
 
-const MyComponent: React.FC = ({ headers, models }: Props) => {
+const GptPage = ({ headers, models }: Props) => {
     const [generatedText, setGeneratedText] = useState("");
     const defaultPrompt = 'Suggest a name for my ragdoll cat';
     const defaultModelIndex = models.findIndex(model => model === 'text-davinci-003') || 0;
@@ -123,4 +123,4 @@ export async function getStaticProps() {
     }
 }
 
-export default MyComponent;
+export default GptPage;
