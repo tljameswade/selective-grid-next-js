@@ -6,6 +6,7 @@ export type TextCompletionsResponseData = {
     error?: string
 }
 
+// Call open AI's text completion's API end point with prompt in the request.
 export default async function (req: NextApiRequest, res: NextApiResponse<TextCompletionsResponseData>) {
     const prompt = req.body.prompt || '';
     const model = req.body.model || '';
