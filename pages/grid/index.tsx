@@ -44,18 +44,20 @@ const Grid = ({ numOfCellsPerRow }: Props) => {
         });
     }
 
+    const mouseDownCell = (row: number, col: number) => {
+        setSelectStatus({
+            ...selectStatus,
+            isHighlighting: true,
+            selected: {
+                startCoord: {row, col},
+                endCoord: {row, col},
+            }
+        });       
+    }
+
     const handleMouseDown = (event: MouseEvent) => {
         if (gridRef.current && !gridRef.current.contains(event.target as Node)) {
             setSelectStatus(initialSelectStatus);
-        } else {
-            setSelectStatus({
-                ...selectStatus,
-                isHighlighting: true,
-                selected: {
-                    startCoord: {...selectStatus.currCoord},
-                    endCoord: {...selectStatus.currCoord},
-                }
-            });            
         }
     }
 
@@ -87,7 +89,8 @@ const Grid = ({ numOfCellsPerRow }: Props) => {
                               selected={isSelected(rowIndex, colIndex, selectStatus.selected)}
                               isRightEdge={colIndex===numOfCellsPerRow - 1}
                               isBottomEdge={rowIndex===numOfCellsPerRow - 1}
-                              mouseOver={mouseOverCell} />)}
+                              mouseOver={mouseOverCell} 
+                              mouseDown={mouseDownCell} />)}
                 </div>)}
         </div>
     );

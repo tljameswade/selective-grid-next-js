@@ -6,6 +6,7 @@ type Props = {
     isRightEdge: boolean,
     isBottomEdge: boolean,
     mouseOver: (row: number, col: number) => void,
+    mouseDown: (row: number, col: number) => void,
 };
 
 export const borderStyle = '1px solid #d1d3de';
@@ -22,7 +23,7 @@ const getCellStyles = (selected: boolean, cellSize: number, isRightEdge: boolean
     };
 }
 
-const Cell = ({rowIndex, colIndex, selected, cellSize, isRightEdge, isBottomEdge, mouseOver}: Props) => 
-    <div style={getCellStyles(selected, cellSize, isRightEdge, isBottomEdge)} onMouseOver={() => mouseOver(rowIndex, colIndex)} />
+const Cell = ({rowIndex, colIndex, selected, cellSize, isRightEdge, isBottomEdge, mouseOver, mouseDown}: Props) => 
+    <div style={getCellStyles(selected, cellSize, isRightEdge, isBottomEdge)} onMouseOver={() => mouseOver(rowIndex, colIndex)} onMouseDown={() => mouseDown(rowIndex, colIndex)}/>
 
 export default Cell

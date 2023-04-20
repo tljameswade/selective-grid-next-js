@@ -6,13 +6,14 @@ export type ChatCompletionsResponseData = {
     error?: string
 }
 
+// Call open AI's chat completion's API end point with messages in the request.
 export default async function (req: NextApiRequest, res: NextApiResponse<ChatCompletionsResponseData>) {
-    const content = req.body.prompt || '';
+    const messages = req.body.messages || [];
     const model = req.body.model || '';
 
-    if (content.trim() === '') {
+    if (messages.length === 0) {
         res.status(400).json({
-            error: 'Please enter a valid prompt for chat completion'
+            error: 'Please enter a valid message for chat completion'
         });
         return;
     }
@@ -27,10 +28,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<ChatCom
     try {
         const completion = await openai.createChatCompletion({
             model,
-            messages: [{
-                role: 'user',
-                content,
-            }],
+            messages,
             temperature: 0.7,
             max_tokens: 500,
             n: 1
