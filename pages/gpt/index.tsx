@@ -1,63 +1,90 @@
 import React, { FormEvent, useState } from "react";
-import axios from 'axios';
 import Dropdown from 'react-dropdown';
 import styles from './gpt.module.css'
 import 'react-dropdown/style.css';
-
-interface PostPromptResponse {
-  choices: { text: string }[];
-}
-
-interface ListModelsResponse {
-    data: Model[]
-}
-
-type Model = {
-    id: string,
-    object: string,
-    permission: PermissionUnit[]
-}
+import { TextCompletionsResponseData } from "../api/text";
+import { configuration, openai } from "../api/common";
+import { ChatCompletionsResponseData } from "../api/chat";
 
 type Item = {
     label: string,
     value: string
 }
 
-type PermissionUnit = {
-    allow_sampling: boolean
-}
-
-type Headers = {
-    Authorization: string,
-    'Content-Type': string,
-};
-
 type Props = {
-    headers: Headers,
-    models: string[],
+    allModels: string[],
+    error: string
 }
 
 type Input = {
-    model: string,
+    gptType: string,
+    availableModels: string[],
+    selectedModel: string,
     prompt: string
 }
 
-const GptPage = ({ headers, models }: Props) => {
+enum GptType {
+    TEXT = 'text',
+    CHAT = 'chat',
+}
+
+const gptTypes = [GptType.TEXT, GptType.CHAT];
+
+const textModels = ['text-davinci-003', 'text-davinci-002', 'text-curie-001', 'text-babbage-001', 'text-ada-001'];
+const chatModels = ['gpt-4', 'gpt-4-0314', 'gpt-4-32k', 'gpt-4-32k-0314', 'gpt-3.5-turbo', 'gpt-3.5-turbo-0301'];
+
+const GptPage = ({ allModels = [], error = '' }: Props) => {
+    const filterModels = (gptType: string): string[] => allModels.filter(model => {
+        switch (gptType) {
+            case GptType.TEXT:
+                return textModels.includes(model);
+            case GptType.CHAT:
+                return chatModels.includes(model);
+            default:
+                return false;
+        }
+    });
+
     const [generatedText, setGeneratedText] = useState("");
     const defaultPrompt = 'Suggest a name for my ragdoll cat';
-    const defaultModelIndex = models.findIndex(model => model === 'text-davinci-003') || 0;
-    const [input, setInput] = useState<Input>({model: models[defaultModelIndex], prompt: defaultPrompt});
+    const [input, setInput] = useState<Input>({
+        gptType: GptType.TEXT,
+        availableModels: filterModels(GptType.TEXT),
+        selectedModel: filterModels(GptType.TEXT)[0],
+        prompt: defaultPrompt});
+
+    const selectGptType = (item: Item) => {
+        setInput({
+            ...input,
+            gptType: item.value,
+            availableModels: filterModels(item.value),
+            selectedModel: filterModels(item.value)[0],
+        });
+    }
 
     const generateResponse = async (e: FormEvent) => {
         e.preventDefault();
-        const result = await makePromptRequest(input, headers);
-        setGeneratedText(result);
+
+        const response = await fetch(input.gptType === GptType.TEXT ? '/api/text' : '/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: input.prompt,
+                model: input.selectedModel
+            })
+        });
+
+        const data: TextCompletionsResponseData | ChatCompletionsResponseData = await response.json();
+
+        setGeneratedText(data.result || data.error);
     }
 
     const setModel = (item: Item) => {
         setInput({
             ...input,
-            model: item.value
+            selectedModel: item.value
         });
     };
 
@@ -70,13 +97,16 @@ const GptPage = ({ headers, models }: Props) => {
 
     return (
     <div className={styles.holder}>
+        <Dropdown options={gptTypes} placeholder='Select a gpt type' onChange={selectGptType} className={styles.dropdown} value={input.gptType} />
         <form onSubmit={generateResponse} className={styles.formHolder}>
             <div className={styles.promptHolder}>
-                <textarea onChange={setPrompt} className={styles.prompt} value={input.prompt} />
+                <textarea onChange={setPrompt} className={styles.prompt} value={input.prompt} style={{height: input.gptType === GptType.CHAT ? '300px' : '100px'}}/>
             </div>
-            <Dropdown options={models} onChange={setModel} placeholder='Select a model' className={styles.dropdown} value={models[defaultModelIndex]} />
+            <div className={styles.models}>
+                {error || <Dropdown options={input.availableModels} onChange={setModel} placeholder='Select a model' className={styles.dropdown} value={input.selectedModel} />}
+            </div>
             <div>
-                <input type="submit" disabled={!input.prompt || !input.model}/>
+                <input type="submit" disabled={!input.prompt || !input.selectedModel}/>
             </div>
         </form>
         Generated answer: {generatedText && <p>{generatedText}</p>}
@@ -84,41 +114,20 @@ const GptPage = ({ headers, models }: Props) => {
     );
 };
 
-const makePromptRequest = async (input: Input, headers: Headers): Promise<string> => {
-    try {
-        const response = await axios.post<PostPromptResponse>(
-            "https://api.openai.com/v1/completions",
-            {
-            prompt: input.prompt,
-            model: input.model,
-            max_tokens: 60,
-            n: 1,
-            stop: null,
-            temperature: 0.5,
-            },
-            {headers}
-        );
-    
-        return response.data.choices[0].text;
-    } catch (error) {
-        return 'An error happens when querying the openAI API. This may due to the model you selected is not supported for v1/completions endpoint. Please try a different model.';
+export async function getServerSideProps() {
+    if (!configuration.apiKey) {
+        return {
+            props: {
+                error: 'OpenAI API key not configured. Please create a .env file and set REACT_APP_OPENAI_API_KEY to your open AI API key.'
+            }
+        };
     }
-}
 
-export async function getStaticProps() {
-    const headers = {
-        Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-    };
-    const listModelsResponse = await axios.get<ListModelsResponse>(
-        'https://api.openai.com/v1/models',
-        {headers}
-    );
-    const models = listModelsResponse.data.data.filter(model => model.permission.find(unit => unit.allow_sampling)).map(model => model.id);
+    const response = await openai.listModels();
+    const allModels = response.data.data.map(model => model.id);
     return {
         props: {
-            headers,
-            models,
+            allModels,
         }
     }
 }
