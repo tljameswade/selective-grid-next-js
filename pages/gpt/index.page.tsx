@@ -2,9 +2,9 @@ import React, { FormEvent, useState } from "react";
 import Dropdown from 'react-dropdown';
 import styles from './gpt.module.css'
 import 'react-dropdown/style.css';
-import { TextCompletionsResponseData } from "../api/text";
+import { TextCompletionsResponseData } from "../api/text.page";
 import { configuration, openai } from "../api/common";
-import { ChatCompletionsResponseData } from "../api/chat";
+import { ChatCompletionsResponseData } from "../api/chat.page";
 
 type Item = {
     label: string,

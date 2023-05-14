@@ -1,5 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Day page renders correctly 1`] = `
+<div>
+  Hello Day. For testing ssh keys.
+</div>
+`;
+
 exports[`renders correctly 1`] = `
 <div>
   Hello Day. For testing ssh keys.
